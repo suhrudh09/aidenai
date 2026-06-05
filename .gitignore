@@ -11,3 +11,8 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
+
+# Python backend
+backend/.venv/
+__pycache__/
+*.pyc

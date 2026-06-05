@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /tmp)",
+      "Bash(rm -rf detector_extract)",
+      "Bash(mkdir detector_extract)",
+      "Bash(unzip -o \"/mnt/c/Users/havya/OneDrive/Desktop/detector.zip\" -d detector_extract)",
+      "PowerShell($zip = \"C:\\\\Users\\\\havya\\\\OneDrive\\\\Desktop\\\\detector.zip\"; Test-Path $zip; $dest = \"D:\\\\ai-safety-guardrail-tmp\\\\detector_extract\"; if \\(Test-Path $dest\\) { Remove-Item -Recurse -Force $dest }; New-Item -ItemType Directory -Force $dest | Out-Null; Expand-Archive -Path $zip -DestinationPath $dest -Force; Write-Output \"EXTRACTED TO $dest\")",
+      "Bash(rm -f backend/_smoke_test.py)",
+      "Bash(rm -rf /tmp/aidenai-peek)",
+      "Bash(git check-ignore *)"
+    ]
+  }
+}

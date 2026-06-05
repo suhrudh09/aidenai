@@ -4,6 +4,7 @@ import {
   Unlock,
   IdCard,
   Brain,
+  Skull,
   AlertTriangle,
 } from 'lucide-react'
 
@@ -24,6 +25,11 @@ export const CATEGORIES = {
     icon: Unlock,
     hex: '#a855f7',
     tw: 'bg-purple-500/15 text-purple-700 border-purple-500/30',
+  },
+  Toxicity: {
+    icon: Skull,
+    hex: '#ef4444',
+    tw: 'bg-red-500/15 text-red-700 border-red-500/30',
   },
   'PII Exposure': {
     icon: IdCard,
