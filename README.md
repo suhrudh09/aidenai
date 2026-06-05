@@ -6,6 +6,20 @@ stores every result in **Firebase Firestore**.
 
 > This repo contains **both** the React frontend (this folder) and the FastAPI
 > backend (in [`backend/`](backend/), see [backend/README.md](backend/README.md)).
+> Full design + diagrams: **[ARCHITECTURE.md](ARCHITECTURE.md)**.
+
+## Pipeline at a glance
+
+```mermaid
+flowchart LR
+    U([prompt]) --> IN{{input guardrail<br/>injection · jailbreak<br/>toxicity · pii}}
+    IN -->|unsafe| BLK[BLOCK]
+    IN -->|ok, PII redacted| LLM[[LLM<br/>OpenRouter]]
+    LLM --> OUT{{output detectors<br/>toxicity · hallucination · pii}}
+    OUT --> EXP[[Explainability<br/>Engine]]
+    EXP --> DEC{ALLOW / BLOCK}
+    DEC --> UI([reply + report])
+```
 
 ## Run the whole thing
 
@@ -43,39 +57,37 @@ Open http://localhost:5173 — the backend runs on http://localhost:8000.
 | `/scanner`   | Prompt Scanner  | Submit text to `/api/analyze`, view safety score / category / action / explanation / redacted text |
 | `/history`   | Threat History  | Firestore-backed table with category + date-range filters; click a row for full detail |
 
-## Getting started
+## Environment variables
 
-```bash
-npm install
-cp .env.example .env   # then fill in the values
-npm run dev
-```
-
-Open http://localhost:5173.
-
-### Environment variables
-
-Set these in `.env` (see [.env.example](.env.example)):
+**Frontend** — set in `.env` (see [.env.example](.env.example)):
 
 - `VITE_API_BASE_URL` — base URL of the FastAPI backend (e.g. `http://localhost:8000`)
 - `VITE_FIREBASE_*` — your Firebase web app config
 
-> If the Firebase vars are missing the app still runs — the scanner works
-> against the API, but scans aren't persisted and History stays empty.
+> If the Firebase vars are missing the app still runs — scans work against the
+> API but aren't persisted and History stays empty.
+
+**Backend** — set in `backend/.env` (see [backend/.env.example](backend/.env.example)):
+
+- `OPENROUTER_API_KEY` — your key from https://openrouter.ai/keys (server-side only)
+- `OPENROUTER_MODEL` — any model slug, e.g. `openai/gpt-4o-mini`
+
+> Without an OpenRouter key the guardrail still runs (input/output screening +
+> detectors); chat replies just come back empty with an explanatory note.
 
 ## Architecture
 
-The Chat page runs the full guardrail pipeline (see [backend/README.md](backend/README.md)):
+Full diagrams, decision policy, and per-detector scoring are in
+**[ARCHITECTURE.md](ARCHITECTURE.md)**. In short:
 
 ```
-prompt -> input guardrail (injection / jailbreak / toxicity)
-       -> LLM (OpenAI / Llama via OpenRouter)
+prompt -> input guardrail (injection / jailbreak / toxicity / pii)
+       -> LLM (OpenAI / Llama via OpenRouter)   [PII redacted before this call]
        -> output detectors (Hallucination / Toxicity / PII Leak)
        -> Explainability Engine -> ALLOW / BLOCK -> UI
 ```
 
-The LLM is called server-side via **OpenRouter** — set `OPENROUTER_API_KEY` in
-`backend/.env` (the key never touches the browser).
+The LLM is called server-side via **OpenRouter** — the key never touches the browser.
 
 ## API contract
 
@@ -128,21 +140,35 @@ the first time the ordered query runs).
 ## Project structure
 
 ```
-src/
+src/                         # frontend
   components/
+    Chat.jsx               # chatbot landing page → /api/chat (full pipeline)
     Sidebar.jsx            # desktop sidebar + mobile bottom nav
     Dashboard.jsx          # cards, activity feed, Recharts pie
-    PromptScanner.jsx      # main feature: analyze + presets + results
+    PromptScanner.jsx      # static scan: analyze + presets + results
     ThreatHistory.jsx      # filterable Firestore table
     ThreatDetailModal.jsx  # full-detail modal
     SafetyScoreBar.jsx     # color-coded score bar (+ riskTier helper)
     CategoryBadge.jsx      # color-coded category pill
   services/
-    api.js                 # axios → FastAPI
+    api.js                 # axios → FastAPI (analyzeText, sendChatMessage)
     firebase.js            # Firestore read/write helpers
   lib/
     categories.js          # category colors/icons (single source of truth)
     format.js              # date / text formatting helpers
   App.jsx                  # routes + layout
   main.jsx                 # entry + BrowserRouter
+
+backend/                     # FastAPI service
+  main.py                  # app, CORS, .env, router mounting
+  guardrail.py             # orchestrator: analyze() + run_chat() pipeline
+  explainability.py        # Explainability Engine (detectors → rationale)
+  routes/
+    analyze.py             # POST /api/analyze (static scanner)
+    chat.py                # POST /api/chat, GET /api/config
+  services/
+    openrouter.py          # OpenRouter LLM client (OpenAI / Llama / ...)
+  schemas/models.py        # Pydantic request models
+  detectors/               # prompt_injection · jailbreak · toxicity
+                           # · hallucination · pii (+ Luhn-checked redaction)
 ```
