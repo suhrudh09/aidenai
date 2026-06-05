@@ -1,2 +1,0 @@
-# aidenai
-aiden ai hackathon
