@@ -8,7 +8,12 @@
       "PowerShell($zip = \"C:\\\\Users\\\\havya\\\\OneDrive\\\\Desktop\\\\detector.zip\"; Test-Path $zip; $dest = \"D:\\\\ai-safety-guardrail-tmp\\\\detector_extract\"; if \\(Test-Path $dest\\) { Remove-Item -Recurse -Force $dest }; New-Item -ItemType Directory -Force $dest | Out-Null; Expand-Archive -Path $zip -DestinationPath $dest -Force; Write-Output \"EXTRACTED TO $dest\")",
       "Bash(rm -f backend/_smoke_test.py)",
       "Bash(rm -rf /tmp/aidenai-peek)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(git add *)",
+      "Bash(grep -E \"backend/.env$|/.env$\")",
+      "Bash(git restore *)",
+      "Bash(git commit -q -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
